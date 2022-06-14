@@ -89,6 +89,38 @@ class TransacaoControllerTests {
 	}
 	
 	
+	@Test
+	public void depositoRealizadoComSucesso() throws Exception {
+		
+		Optional<Cliente> findClienteAntesSaque = clienteRepository.findByNumeroConta("111111");
+		Cliente clienteAntesSaque = findClienteAntesSaque.get();
+		
+		BigDecimal valorDeposito = BigDecimal.valueOf(10);
+		
+		TransacaoDTO saque = new TransacaoDTO("D","111111",valorDeposito);
+		
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        Gson gson = gsonBuilder.setPrettyPrinting().create();
+        
+		String strSaque = gson.toJson(saque);
+		
+		this.mockMvc.perform(post("/transacoes")
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .content(strSaque))
+	            .andDo(print())
+	            .andExpect(status().is2xxSuccessful());
+		
+		BigDecimal saldoAntesSaque = clienteAntesSaque.getSaldo().add(valorDeposito);
+		
+		Optional<Cliente> findclienteDepoisSaque = clienteRepository.findByNumeroConta("111111");
+		Cliente clienteDepoisSaque = findclienteDepoisSaque.get();
+		BigDecimal saldoDepoisSaque = clienteDepoisSaque.getSaldo();
+		
+		Assert.assertEquals(saldoAntesSaque, saldoDepoisSaque);
+		
+	}
+	
+	
 	
 	@Test
 	public void saqueSaldoInsuficiente() throws Exception {
@@ -137,6 +169,9 @@ class TransacaoControllerTests {
 	            .andExpect(status().is(409))
 	            .andExpect(content().string("Cliente não encontrado"));
 	}
+	
+	
+	
 	
 }
 
